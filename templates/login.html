@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Sign in · Family Recipe Book{% endblock %}
+
+{% block content %}
+<section class="auth-card">
+    <h1>Sign in</h1>
+    <p class="muted">Enter a family username. New usernames create a profile automatically.</p>
+    <form method="post" action="{{ url_for('login') }}">
+        <label>
+            Username
+            <input type="text" name="username" required autofocus
+                   pattern="[A-Za-z0-9_.-]{2,80}"
+                   title="2-80 letters, numbers, dot, dash, underscore">
+        </label>
+        <label>
+            Display name <span class="muted small">(optional, for new profiles)</span>
+            <input type="text" name="display_name" maxlength="120">
+        </label>
+        <button class="button" type="submit">Continue</button>
+    </form>
+</section>
+{% endblock %}

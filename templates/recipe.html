@@ -1,42 +1,109 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ recipe.title }}</title>
-</head>
-<body>
-    <h1>{{ recipe.title }}</h1>
-    <img src="{{ recipe.image_url }}" alt="{{ recipe.title }}">
-    <h2>Ingredients</h2>
-    <ul>
-        {% for ingredient in recipe.ingredients %}
-            <li>{{ ingredient }}</li>
-        {% endfor %}
-    </ul>
-    <h2>Instructions</h2>
-    <p>{{ recipe.instructions }}</p>
+{% extends 'base.html' %}
+{% block title %}{{ recipe.title }} · Family Recipe Book{% endblock %}
 
-    <h2>Comments</h2>
-    <div id="comments-section">
-        {% for comment in recipe.comments %}
-            <div class="comment">
-                <p><strong>{{ comment.user }}:</strong> {{ comment.text }}</p>
+{% block content %}
+<article class="recipe" data-recipe-id="{{ recipe.id }}">
+    <header class="recipe-header">
+        <h1>{{ recipe.title }}</h1>
+        <p class="muted">
+            by <a href="{{ url_for('profile', username=recipe.owner.username) }}">{{ recipe.owner.name }}</a>
+            · {{ recipe.created_at.strftime('%b %d, %Y') }}
+        </p>
+        {% if recipe.tag_list %}
+            <div class="tags">
+                {% for t in recipe.tag_list %}<span class="tag">{{ t }}</span>{% endfor %}
             </div>
+        {% endif %}
+    </header>
+
+    {% if recipe.image_filename %}
+        <img class="recipe-hero"
+             src="{{ url_for('static', filename='uploads/' ~ recipe.image_filename) }}"
+             alt="{{ recipe.title }}">
+    {% endif %}
+
+    {% if recipe.description %}
+        <p class="lead">{{ recipe.description }}</p>
+    {% endif %}
+
+    <section class="interactions">
+        <form action="{{ url_for('toggle_thumbs', recipe_id=recipe.id) }}" method="post"
+              class="thumbs-form inline-form">
+            <button type="submit" class="button thumbs-btn {% if user_thumbed %}active{% endif %}"
+                    {% if not current_user %}disabled title="Sign in to react"{% endif %}>
+                👍 <span class="thumbs-count">{{ recipe.thumbs_count }}</span>
+            </button>
+        </form>
+
+        <div class="rating" data-current="{{ user_rating }}">
+            <span class="rating-label">
+                Avg <strong class="avg">{{ '%.1f' % recipe.average_rating }}</strong>
+                ({{ recipe.ratings|length }})
+            </span>
+            <form action="{{ url_for('rate_recipe', recipe_id=recipe.id) }}" method="post"
+                  class="rate-form">
+                <div class="stars" role="radiogroup" aria-label="Rate this recipe">
+                    {% for i in range(1, 6) %}
+                        <button type="submit" name="stars" value="{{ i }}"
+                                class="star {% if i <= user_rating %}on{% endif %}"
+                                aria-label="{{ i }} star{{ '' if i == 1 else 's' }}"
+                                {% if not current_user %}disabled title="Sign in to rate"{% endif %}>★</button>
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+
+        {% if current_user and current_user.id == recipe.owner_id %}
+            <form action="{{ url_for('delete_recipe', recipe_id=recipe.id) }}" method="post"
+                  class="inline-form"
+                  onsubmit="return confirm('Delete this recipe?');">
+                <button type="submit" class="button button-danger">Delete</button>
+            </form>
+        {% endif %}
+    </section>
+
+    <section class="columns">
+        <div>
+            <h2>Ingredients</h2>
+            <ul class="ingredients">
+                {% for ingredient in recipe.ingredient_list %}
+                    <li>{{ ingredient }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div>
+            <h2>Instructions</h2>
+            <div class="instructions">{{ recipe.instructions }}</div>
+        </div>
+    </section>
+
+    <section class="comments">
+        <h2>Comments ({{ recipe.comments|length }})</h2>
+
+        {% if current_user %}
+            <form action="{{ url_for('add_comment', recipe_id=recipe.id) }}" method="post"
+                  class="comment-form">
+                <textarea name="content" rows="3" required
+                          placeholder="Share your thoughts..."></textarea>
+                <button type="submit" class="button">Post comment</button>
+            </form>
+        {% else %}
+            <p><a href="{{ url_for('login') }}">Sign in</a> to comment.</p>
+        {% endif %}
+
+        {% for c in recipe.comments %}
+            <div class="comment">
+                <p class="comment-meta">
+                    <a href="{{ url_for('profile', username=c.author.username) }}">
+                        <strong>{{ c.author.name }}</strong>
+                    </a>
+                    <span class="muted small">· {{ c.created_at.strftime('%b %d, %Y %H:%M') }}</span>
+                </p>
+                <p>{{ c.content }}</p>
+            </div>
+        {% else %}
+            <p class="muted">No comments yet.</p>
         {% endfor %}
-    </div>
-
-    <h3>Add a Comment</h3>
-    <form action="/add_comment" method="POST">
-        <input type="hidden" name="recipe_id" value="{{ recipe.id }}">
-        <textarea name="comment_text" required></textarea>
-        <button type="submit">Submit</button>
-    </form>
-
-    <h3>Give a Thumbs Up</h3>
-    <form action="/thumbs_up" method="POST">
-        <input type="hidden" name="recipe_id" value="{{ recipe.id }}">
-        <button type="submit">👍</button>
-    </form>
-</body>
-</html>
+    </section>
+</article>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}{{ user.name }} · Family Recipe Book{% endblock %}
+
+{% block content %}
+<section class="profile">
+    <h1>{{ user.name }}</h1>
+    <p class="muted">@{{ user.username }} · joined {{ user.created_at.strftime('%b %Y') }}</p>
+    {% if user.bio %}<p class="lead">{{ user.bio }}</p>{% endif %}
+
+    {% if current_user and current_user.id == user.id %}
+        <p><a class="button button-ghost" href="{{ url_for('edit_profile') }}">Edit profile</a></p>
+    {% endif %}
+
+    <h2>Recipes by {{ user.name }} ({{ user.recipes|length }})</h2>
+    {% if user.recipes %}
+        <div class="recipe-grid">
+            {% for r in user.recipes|sort(attribute='created_at', reverse=True) %}
+                <a class="recipe-card" href="{{ url_for('recipe_detail', recipe_id=r.id) }}">
+                    {% if r.image_filename %}
+                        <img class="recipe-card-img"
+                             src="{{ url_for('static', filename='uploads/' ~ r.image_filename) }}"
+                             alt="{{ r.title }}">
+                    {% else %}
+                        <div class="recipe-card-img placeholder">🥣</div>
+                    {% endif %}
+                    <div class="recipe-card-body">
+                        <h3>{{ r.title }}</h3>
+                        <p class="muted small">{{ r.created_at.strftime('%b %d, %Y') }}</p>
+                        <div class="meta-row">
+                            <span>👍 {{ r.thumbs_count }}</span>
+                            <span>★ {{ '%.1f' % r.average_rating }}</span>
+                            <span>💬 {{ r.comments|length }}</span>
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="muted">No recipes yet.</p>
+    {% endif %}
+</section>
+{% endblock %}

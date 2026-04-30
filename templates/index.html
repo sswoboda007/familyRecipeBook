@@ -1,27 +1,56 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Family Recipe Book</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <header>
-        <h1>Welcome to the Family Recipe Book</h1>
-        <input type="text" id="search-bar" placeholder="Search for recipes...">
-    </header>
-    <main>
-        <section id="recipes">
-            <h2>Recipes</h2>
-            <div id="recipe-list">
-                <!-- Recipe items will be injected here -->
+{% extends 'base.html' %}
+{% block title %}Recipes · Family Recipe Book{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Our Family Cookbook</h1>
+    <p class="muted">Share recipes, cheer each other on, and keep the good food coming.</p>
+    <form class="search" method="get" action="{{ url_for('index') }}">
+        <input type="search" name="q" value="{{ q }}" placeholder="Search title, ingredients, description...">
+        <input type="text" name="tag" value="{{ tag }}" placeholder="Tag (e.g. vegetarian)">
+        <button type="submit" class="button">Search</button>
+        {% if q or tag %}
+            <a class="button button-ghost" href="{{ url_for('index') }}">Clear</a>
+        {% endif %}
+    </form>
+</section>
+
+{% if recipes %}
+<div class="recipe-grid">
+    {% for r in recipes %}
+        <a class="recipe-card" href="{{ url_for('recipe_detail', recipe_id=r.id) }}">
+            {% if r.image_filename %}
+                <img class="recipe-card-img"
+                     src="{{ url_for('static', filename='uploads/' ~ r.image_filename) }}"
+                     alt="{{ r.title }}">
+            {% else %}
+                <div class="recipe-card-img placeholder">🥣</div>
+            {% endif %}
+            <div class="recipe-card-body">
+                <h3>{{ r.title }}</h3>
+                <p class="muted small">by {{ r.owner.name }} · {{ r.created_at.strftime('%b %d, %Y') }}</p>
+                {% if r.description %}<p class="clamp">{{ r.description }}</p>{% endif %}
+                <div class="meta-row">
+                    <span>👍 {{ r.thumbs_count }}</span>
+                    <span>★ {{ '%.1f' % r.average_rating }} ({{ r.ratings|length }})</span>
+                    <span>💬 {{ r.comments|length }}</span>
+                </div>
+                {% if r.tag_list %}
+                    <div class="tags">
+                        {% for t in r.tag_list %}<span class="tag">{{ t }}</span>{% endfor %}
+                    </div>
+                {% endif %}
             </div>
-        </section>
-    </main>
-    <footer>
-        <p>&copy; 2023 Family Recipe Book</p>
-    </footer>
-    <script src="script.js"></script>
-</body>
-</html>
+        </a>
+    {% endfor %}
+</div>
+{% else %}
+    <p class="empty">No recipes yet{% if q or tag %} matching your search{% endif %}.
+        {% if current_user %}
+            <a href="{{ url_for('new_recipe') }}">Add the first one →</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">Sign in</a> to add one.
+        {% endif %}
+    </p>
+{% endif %}
+{% endblock %}

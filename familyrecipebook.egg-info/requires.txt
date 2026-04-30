@@ -1,0 +1,4 @@
+Flask<4.0,>=3.0
+Flask-SQLAlchemy<4.0,>=3.1
+SQLAlchemy<3.0,>=2.0
+Werkzeug<4.0,>=3.0

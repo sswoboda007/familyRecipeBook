@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}{{ code }} · Family Recipe Book{% endblock %}
+
+{% block content %}
+<section class="empty-state">
+    <h1>{{ code }}</h1>
+    <p class="muted">{{ message }}</p>
+    <p><a class="button" href="{{ url_for('index') }}">Back to recipes</a></p>
+</section>
+{% endblock %}

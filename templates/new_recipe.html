@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}New Recipe · Family Recipe Book{% endblock %}
+
+{% block content %}
+<section class="form-card">
+    <h1>Add a Recipe</h1>
+    <form method="post" action="{{ url_for('new_recipe') }}" enctype="multipart/form-data">
+        <label>
+            Title
+            <input type="text" name="title" required maxlength="120"
+                   value="{{ form.get('title', '') }}">
+        </label>
+        <label>
+            Short description
+            <input type="text" name="description" maxlength="255"
+                   value="{{ form.get('description', '') }}">
+        </label>
+        <label>
+            Tags <span class="muted small">(comma-separated, e.g. dessert, vegetarian)</span>
+            <input type="text" name="tags" maxlength="255"
+                   value="{{ form.get('tags', '') }}">
+        </label>
+        <label>
+            Ingredients <span class="muted small">(one per line)</span>
+            <textarea name="ingredients" rows="8" required>{{ form.get('ingredients', '') }}</textarea>
+        </label>
+        <label>
+            Instructions
+            <textarea name="instructions" rows="10" required>{{ form.get('instructions', '') }}</textarea>
+        </label>
+        <label>
+            Photo <span class="muted small">(optional, up to 8 MB)</span>
+            <input type="file" name="image" accept="image/*">
+        </label>
+        <div class="form-actions">
+            <button class="button" type="submit">Save Recipe</button>
+            <a class="button button-ghost" href="{{ url_for('index') }}">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

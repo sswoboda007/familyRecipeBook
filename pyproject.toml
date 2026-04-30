@@ -1,5 +1,19 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "familyrecipebook"
 version = "0.1.0"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "Flask>=3.0,<4.0",
+    "Flask-SQLAlchemy>=3.1,<4.0",
+    "SQLAlchemy>=2.0,<3.0",
+    "Werkzeug>=3.0,<4.0",
+]
+
+# This is a Flask application, not a library. Ship only the two Python
+# modules; static/ and templates/ are runtime assets, not Python packages.
+[tool.setuptools]
+py-modules = ["app", "models"]
