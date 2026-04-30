@@ -4,19 +4,23 @@
 {% block content %}
 <section class="auth-card">
     <h1>Sign in</h1>
-    <p class="muted">Enter a family username. New usernames create a profile automatically.</p>
+    <p class="muted">Enter your username and password.</p>
     <form method="post" action="{{ url_for('login') }}">
         <label>
             Username
             <input type="text" name="username" required autofocus
+                   value="{{ form.username or '' }}"
                    pattern="[A-Za-z0-9_.-]{2,80}"
                    title="2-80 letters, numbers, dot, dash, underscore">
         </label>
         <label>
-            Display name <span class="muted small">(optional, for new profiles)</span>
-            <input type="text" name="display_name" maxlength="120">
+            Password
+            <input type="password" name="password" required>
         </label>
-        <button class="button" type="submit">Continue</button>
+        <button class="button" type="submit">Sign in</button>
     </form>
+    <p class="muted small">
+        New here? <a href="{{ url_for('signup') }}">Create an account</a>.
+    </p>
 </section>
 {% endblock %}

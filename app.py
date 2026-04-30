@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 from pathlib import Path
 
@@ -12,6 +13,8 @@ from models import Comment, Rating, Recipe, ThumbsUp, User, db
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = BASE_DIR / 'static' / 'uploads'
 ALLOWED_IMAGE_EXTS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+USERNAME_RE = re.compile(r'^[A-Za-z0-9_.-]{2,80}$')
+MIN_PASSWORD_LEN = 6
 
 
 def create_app():
@@ -101,26 +104,52 @@ def register_routes(app: Flask):
         recipes = query.order_by(Recipe.created_at.desc()).all()
         return render_template('index.html', recipes=recipes, q=q, tag=tag)
 
-    # --- Auth (simple, passwordless family login) ---
+    # --- Auth (open sign-up + password login) ---
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         if request.method == 'POST':
             username = (request.form.get('username') or '').strip().lower()
-            display_name = (request.form.get('display_name') or '').strip()
-            if not username:
-                flash('Username is required.', 'danger')
-                return render_template('login.html')
+            password = request.form.get('password') or ''
+            if not username or not password:
+                flash('Username and password are required.', 'danger')
+                return render_template('login.html', form=request.form)
             user = User.query.filter_by(username=username).first()
-            if user is None:
-                user = User(username=username, display_name=display_name or None)
-                db.session.add(user)
-                db.session.commit()
-                flash(f'Welcome, {user.name}! Profile created.', 'success')
-            else:
-                flash(f'Welcome back, {user.name}!', 'success')
+            if user is None or not user.check_password(password):
+                flash('Invalid username or password.', 'danger')
+                return render_template('login.html', form=request.form)
             session['user_id'] = user.id
+            flash(f'Welcome back, {user.name}!', 'success')
             return redirect(request.args.get('next') or url_for('index'))
-        return render_template('login.html')
+        return render_template('login.html', form={})
+
+    @app.route('/signup', methods=['GET', 'POST'])
+    def signup():
+        if request.method == 'POST':
+            username = (request.form.get('username') or '').strip().lower()
+            display_name = (request.form.get('display_name') or '').strip()
+            password = request.form.get('password') or ''
+            confirm = request.form.get('confirm_password') or ''
+            errors = []
+            if not USERNAME_RE.match(username):
+                errors.append('Username must be 2-80 chars: letters, numbers, dot, dash, underscore.')
+            elif User.query.filter_by(username=username).first():
+                errors.append('That username is already taken.')
+            if len(password) < MIN_PASSWORD_LEN:
+                errors.append(f'Password must be at least {MIN_PASSWORD_LEN} characters.')
+            if password != confirm:
+                errors.append('Passwords do not match.')
+            if errors:
+                for e in errors:
+                    flash(e, 'danger')
+                return render_template('signup.html', form=request.form)
+            user = User(username=username, display_name=display_name or None)
+            user.set_password(password)
+            db.session.add(user)
+            db.session.commit()
+            session['user_id'] = user.id
+            flash(f'Welcome, {user.name}! Account created.', 'success')
+            return redirect(request.args.get('next') or url_for('index'))
+        return render_template('signup.html', form={})
 
     @app.route('/logout', methods=['POST'])
     def logout():

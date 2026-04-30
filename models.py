@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import check_password_hash, generate_password_hash
 
 db = SQLAlchemy()
 
@@ -10,7 +11,14 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     display_name = db.Column(db.String(120), nullable=True)
     bio = db.Column(db.Text, nullable=True)
+    password_hash = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def set_password(self, password: str) -> None:
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password: str) -> bool:
+        return bool(self.password_hash) and check_password_hash(self.password_hash, password)
 
     recipes = db.relationship('Recipe', backref='owner', lazy=True,
                               cascade='all, delete-orphan')
